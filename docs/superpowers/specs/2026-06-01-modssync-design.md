@@ -14,6 +14,19 @@ only once at launch, any change requires a restart — so ModsSync gates entry
 with an explicit "restart required" screen rather than changing anything
 silently.
 
+### Home snapshot + restore
+
+The first time ModsSync runs, it records the player's current mod set as their
+**home snapshot** (the original modpack: which `modId`s at which versions were
+enabled). This is the baseline the player came from before any server syncing.
+
+ModsSync can **restore** the home snapshot on demand — re-enabling/re-downloading
+the home mods and disabling anything that isn't part of it — using the same diff
++ mutate + restart-gate machinery, just targeting the saved snapshot instead of a
+server's set. Restore is offered from the main menu and from the restart-gate
+screen, so a player who has been mirrored to a server can always get back to
+their own modpack.
+
 ### Mirror rules
 
 | Situation | Action |
@@ -118,7 +131,8 @@ For each `toDownload` entry, resolve a source in priority order:
 - **Modrinth** (no API key): if the manifest provided a `sha1`, use Modrinth's
   hash-based version lookup (exact). Otherwise search by `modId` + game version
   `26.1.2` + loader `neoforge`, then pick the matching `version`.
-- **CurseForge** (requires an API key configured by the user): same idea via the
+- **CurseForge** (requires an API key configured by the user via the in-game
+  ModsSync config screen, persisted to the config file): same idea via the
   CurseForge API.
 - Downloads land in a temp dir, are hash/loader-validated, then moved into
   `mods/`.
@@ -148,6 +162,9 @@ connect screen with a custom screen:
   - **Exit The Game** — quits Minecraft entirely.
   - **Exit The Server** — returns to the main/server-list screen (no restart;
     user restarts manually later).
+- A **Restore My Modpack** action (also available from the main menu) re-targets
+  the sync at the home snapshot (§1) so the player can return to their original
+  mod set.
 
 ## 9. Error handling
 
@@ -171,8 +188,10 @@ connect screen with a custom screen:
 | `Acquirer` | Resolve + download jars (server → Modrinth → CurseForge) | HTTP, ProtectedCore |
 | `FolderMutator` | Disable/enable/add jars safely | ProtectedCore |
 | `ProtectedCore` | Hardcoded never-touch allowlist | — |
-| `SyncOrchestrator` | Drive the flow during configuration phase; decide gate vs join | all above |
-| `RestartGateScreen` | The two-button UI | NeoForge client UI |
+| `SnapshotStore` | Record/load the home snapshot; provide it as a sync target for restore | filesystem |
+| `SyncOrchestrator` | Drive the flow during configuration phase; decide gate vs join; run restore | all above |
+| `RestartGateScreen` | The restart UI (Exit Game / Exit Server / Restore Modpack) | NeoForge client UI |
+| `ConfigScreen` | In-game config incl. CurseForge API key entry | NeoForge client UI, Config |
 
 Each unit is independently testable: `DiffEngine`, `LocalInventory`,
 `ProtectedCore`, and `FolderMutator` are pure-ish (filesystem/data) and need no
@@ -182,7 +201,8 @@ running game; networking/UI units are integration-tested.
 
 - **Unit:** `DiffEngine` (all four mirror rules + protected core), `LocalInventory`
   toml parsing, `FolderMutator` (disable→delete fallback) against a temp dir,
-  `ProtectedCore` filtering.
+  `ProtectedCore` filtering, `SnapshotStore` (record/load home snapshot, and
+  restore producing the correct `SyncPlan`).
 - **Integration / game tests:** NeoForge gametest for the configuration-phase
   manifest exchange between a ModsSync client and ModsSync server.
 - **Manual:** join (a) a ModsSync server with a mod diff, (b) a vanilla-NeoForge
@@ -205,9 +225,11 @@ edges: networking channel, handshake reader, and the restart screen. Ports are
 created by cloning this project under `multi/<loader>/<version>/` and translating
 those edges.
 
-## 14. Out of scope (v1)
+## 14. Out of scope
 
-- Re-enabling the player's "previous" mod set after leaving a server (one-way
-  mirror only; the player restarts into whatever set was last synced).
-- A GUI for configuring the CurseForge API key (config file only for v1).
-- Syncing resource packs, config files, or world data.
+The mod is built complete (no phased versions); the following are simply not
+part of ModsSync's job:
+
+- Syncing resource packs, config files, or world/save data — ModsSync only
+  mirrors the set of *mods*.
+- Managing mods outside the `mods/` folder.
