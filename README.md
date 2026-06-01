@@ -1,25 +1,53 @@
+# ModsSync
 
-Installation information
-=======
+A Minecraft mod built to target **multiple loaders and game versions**.
 
-This template repository can be directly cloned to get you started with a new
-mod. Simply create a new repository cloned from this one, by following the
-instructions provided by [GitHub](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template).
+## Repository layout
 
-Once you have your clone, simply open the repository in the IDE of your choice. The usual recommendation for an IDE is either IntelliJ IDEA or Eclipse.
+All buildable mod projects live under `multi/`, organized by loader, then by
+Minecraft version:
 
-If at any point you are missing libraries in your IDE, or you've run into problems you can
-run `gradlew --refresh-dependencies` to refresh the local cache. `gradlew clean` to reset everything 
-{this does not affect your code} and then start the process again.
+```
+multi/
+├── neoforge/
+│   └── 26-1-2/        ← active project (NeoForge, MC 26.1.2) — fully buildable
+├── forge/
+├── fabric/
+└── quilt/
+```
 
-Mapping Names:
-============
-By default, the MDK is configured to use the official mapping names from Mojang for methods and fields 
-in the Minecraft codebase. These names are covered by a specific license. All modders should be aware of this
-license. For the latest license text, refer to the mapping file itself, or the reference copy here:
-https://github.com/NeoForged/NeoForm/blob/main/Mojang.md
+Each `<loader>/<version>/` directory is a **self-contained Gradle project**
+(its own `build.gradle`, `gradlew`, `src/`, etc.). They are independent and can
+be built in isolation.
 
-Additional Resources: 
-==========
-Community Documentation: https://docs.neoforged.net/  
-NeoForged Discord: https://discord.neoforged.net/
+## Current status
+
+`multi/neoforge/26-1-2/` is the canonical implementation. The mod is being
+developed there first.
+
+- **mod id:** `modssync`
+- **package:** `com.modssync`
+- **Minecraft:** 26.1.2
+- **NeoForge:** 26.1.2.68-beta
+- **Java:** 25
+
+## Porting to other loaders / versions
+
+Once the NeoForge 26.1.2 implementation is complete, each port is created by
+**cloning** `multi/neoforge/26-1-2/` into the appropriate
+`multi/<loader>/<version>/` directory and **translating** the loader-specific
+APIs (registration, event bus, mod metadata, etc.) for the target platform.
+
+## Building
+
+```sh
+cd multi/neoforge/26-1-2
+./gradlew build          # or gradlew.bat build on Windows
+```
+
+To run the client/server in a dev environment:
+
+```sh
+./gradlew runClient
+./gradlew runServer
+```
