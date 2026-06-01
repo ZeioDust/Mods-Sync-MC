@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.modssync.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "ClientConfigurationMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

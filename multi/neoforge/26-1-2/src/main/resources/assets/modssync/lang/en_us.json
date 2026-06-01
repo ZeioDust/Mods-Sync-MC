@@ -1,5 +1,11 @@
 {
   "modssync.configuration.title": "ModsSync Configs",
   "modssync.configuration.section.modssync.common.toml": "ModsSync Configs",
-  "modssync.configuration.section.modssync.common.toml.title": "ModsSync Configs"
+  "modssync.configuration.section.modssync.common.toml.title": "ModsSync Configs",
+  "modssync.configuration.curseforgeApiKey": "CurseForge API Key",
+  "modssync.screen.restart.title": "Mods Updated",
+  "modssync.screen.restart.message": "Your Mods Got Matched To The Server Mod, Please Restart Your Game",
+  "modssync.screen.restart.exit_game": "Exit The Game",
+  "modssync.screen.restart.exit_server": "Exit The Server",
+  "modssync.screen.restart.restore": "Restore My Modpack"
 }
