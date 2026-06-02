@@ -1,6 +1,6 @@
 package com.modssync.net;
 
-import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -8,7 +8,7 @@ import net.minecraft.resources.Identifier;
 import java.util.List;
 
 /**
- * Client → server payload sent during the play phase.
+ * Client → server payload sent during the configuration phase.
  *
  * <p>After the client has received and processed both {@link ManifestPayload} and
  * {@link PackManifestPayload}, it knows which files it is missing or needs to update.
@@ -33,11 +33,11 @@ public record RequestFilesPayload(String folder, List<String> fileNames) impleme
      * names. Both are plain UTF-8 strings; no null handling is needed because the
      * client always supplies concrete values.
      *
-     * <p>Note: this uses {@link RegistryFriendlyByteBuf} (play-phase buffer) rather
-     * than the bare {@link net.minecraft.network.FriendlyByteBuf} used by the config-
-     * phase payloads, matching where in the connection lifecycle this packet is sent.
+     * <p>Note: this uses the bare {@link FriendlyByteBuf} (configuration-phase buffer),
+     * matching where in the connection lifecycle this packet is sent — the whole
+     * match/download/disable now happens during configuration, before the world loads.
      */
-    public static final StreamCodec<RegistryFriendlyByteBuf, RequestFilesPayload> STREAM_CODEC =
+    public static final StreamCodec<FriendlyByteBuf, RequestFilesPayload> STREAM_CODEC =
             StreamCodec.composite(
                     ByteBufCodecs.STRING_UTF8, RequestFilesPayload::folder,
                     ByteBufCodecs.STRING_UTF8.apply(ByteBufCodecs.list()), RequestFilesPayload::fileNames,

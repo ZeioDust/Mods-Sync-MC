@@ -1,5 +1,7 @@
 {
   "modssync.disconnect": "ModsSync updated your mods to match the server. Wait a few seconds for downloads to finish, then fully restart Minecraft and rejoin.",
   "modssync.unauthorized": "Unauthorized mods or resource packs detected. ModsSync has scheduled them for removal — fully CLOSE and reopen Minecraft, then rejoin. (You cannot join with disallowed client mods active.)",
-  "modssync.restart": "ModsSync downloaded the server's mods/packs. Fully restart Minecraft to load them, then rejoin."
+  "modssync.restart": "ModsSync downloaded the server's mods/packs. Fully restart Minecraft to load them, then rejoin.",
+  "modssync.screen.downloading.title": "ModsSync — downloading mods from the server…",
+  "modssync.screen.restart.title": "ModsSync — Mods Updated"
 }

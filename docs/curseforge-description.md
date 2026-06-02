@@ -20,9 +20,10 @@ When you join a ModsSync server:
 The result: a consistent, fair-play modpack across everyone on the server, with no manual setup for players.
 
 ### How it works
-- On connect, the server advertises its allowed mod/pack set.
-- Your client compares it to your folders. If everything matches, you join normally.
-- If not, ModsSync clones what's missing and schedules unauthorized files for removal, then asks you to **restart once**. After the restart you're perfectly in sync and can play.
+- On connect, the server advertises its allowed mod/pack set — all **while you're still on the loading screen**, before the world loads.
+- Your client compares it to your folders. If everything matches, you drop straight into the world.
+- If not, ModsSync clones what's missing (with a **live progress bar** so a big modpack doesn't look frozen) and schedules unauthorized files for removal — **all in a single connection** — then asks you to **restart once**. After the restart you're perfectly in sync and can play.
+- A **mid-session guard** keeps watching: try to enable a cheat resource pack (e.g. X-ray) after joining and you're kicked, with the pack scheduled for removal.
 - Disabling happens cleanly between launches (a small headless helper, no console window; works on Windows/macOS/Linux).
 
 ### For server admins
@@ -45,7 +46,18 @@ ModsSync is a server-side fair-play / modpack-consistency tool. File transfer on
 
 ---
 
+## Upload settings (current build)
+- **File:** `jars/modssync_6.17.10-fabric.26.1.2.jar`
+- **Game version:** 26.1.2  ·  **Modloader:** Fabric  ·  **Java:** 25
+- **Release type:** Release
+- **Relations:** add **Fabric API** as a *Required dependency*.
+- **License:** **MIT** (the jar already declares `MIT`; `LICENSE` file is in the repo root).
+- Required on **both** the server and the client.
+
+## Changelog (6.17.10)
+- Sync now runs entirely during the connection/loading phase — the download **progress bar shows on the loading screen**, and matching/downloading/disabling all complete in **one connection** (no more connect-twice).
+- Added a **mid-session resource-pack guard**: enabling a pack the server didn't offer kicks you and queues it for removal.
+- Finishing the transfer now shows a clear "Mods Updated — please restart" screen instead of leaving you on the progress bar.
+
 ## TODO before submitting
-- Add a **128×128 `icon.png`** at `src/main/resources/assets/modssync/icon.png` (referenced by `fabric.mod.json`; optional but recommended — without it Fabric just logs a warning).
-- Set the **license** in the CurseForge UI to **MIT** (the jar already declares `MIT`, and a `LICENSE` file is in the repo root).
-- Upload `jars/modssync_4.1.2-fabric.26.1.2.jar`, set game version **26.1.2** + loader **Fabric**, and add **Fabric API** as a required dependency/relation.
+- Add a **128×128 `icon.png`** at `src/main/resources/assets/modssync/icon.png` (referenced by `fabric.mod.json`; optional — without it Fabric just logs a warning).

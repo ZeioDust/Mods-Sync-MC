@@ -1,39 +1,51 @@
 {
   "stats": {
     "minecraft:picked_up": {
-      "minecraft:slime_ball": 10,
-      "minecraft:rotten_flesh": 5
-    },
-    "minecraft:used": {
-      "minecraft:rotten_flesh": 1
+      "minecraft:dirt": 16,
+      "minecraft:white_wool": 1,
+      "minecraft:slime_ball": 34,
+      "minecraft:mutton": 2,
+      "minecraft:bone": 2,
+      "minecraft:rotten_flesh": 6
     },
     "minecraft:custom": {
-      "minecraft:time_since_rest": 47,
-      "minecraft:walk_one_cm": 26710,
-      "minecraft:leave_game": 15,
-      "minecraft:mob_kills": 24,
-      "minecraft:damage_taken": 1600,
-      "minecraft:damage_dealt": 1483,
-      "minecraft:play_time": 11871,
-      "minecraft:jump": 141,
+      "minecraft:time_since_rest": 54,
+      "minecraft:walk_one_cm": 37682,
+      "minecraft:leave_game": 28,
+      "minecraft:mob_kills": 44,
+      "minecraft:damage_taken": 3725,
+      "minecraft:damage_dealt": 2231,
+      "minecraft:play_time": 16602,
+      "minecraft:jump": 263,
       "minecraft:time_since_death": 0,
-      "minecraft:sprint_one_cm": 16373,
-      "minecraft:fall_one_cm": 426,
-      "minecraft:total_world_time": 11871,
-      "minecraft:fly_one_cm": 21365,
-      "minecraft:crouch_one_cm": 820,
-      "minecraft:sneak_time": 432,
-      "minecraft:deaths": 6
+      "minecraft:drop": 3,
+      "minecraft:sprint_one_cm": 20919,
+      "minecraft:fall_one_cm": 2001,
+      "minecraft:total_world_time": 16602,
+      "minecraft:fly_one_cm": 39689,
+      "minecraft:crouch_one_cm": 1580,
+      "minecraft:sneak_time": 592,
+      "minecraft:deaths": 14
     },
     "minecraft:killed": {
-      "minecraft:slime": 19,
-      "minecraft:zombie": 1
+      "minecraft:slime": 35,
+      "minecraft:zombie": 3,
+      "minecraft:sheep": 1
+    },
+    "minecraft:used": {
+      "minecraft:rotten_flesh": 1,
+      "minecraft:dirt": 12,
+      "minecraft:white_wool": 1
     },
     "minecraft:killed_by": {
       "minecraft:creeper": 1,
+      "minecraft:enderman": 3,
       "minecraft:spider": 1,
-      "minecraft:slime": 2,
-      "minecraft:zombie": 2
+      "minecraft:slime": 3,
+      "minecraft:zombie": 6
+    },
+    "minecraft:dropped": {
+      "minecraft:slime_ball": 11
     }
   },
   "DataVersion": 4790

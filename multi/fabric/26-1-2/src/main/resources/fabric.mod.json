@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "modssync",
   "version": "${version}",
-  "name": "ModsSync",
+  "name": "Mods Auto Sync",
   "description": "Server-enforced mod & resource-pack sync. The server decides the allowed set; clients are made to match it — extra (cheat) mods/packs like minimaps or x-ray are disabled, missing ones are cloned from the server. A fair-play / modpack-consistency tool for trusted servers.",
   "authors": [
     "ZeioDust"

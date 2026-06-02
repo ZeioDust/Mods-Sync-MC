@@ -1,13 +1,13 @@
 package com.modssync.net;
 
-import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 
 /**
- * Server → client payload sent during the play phase (registered as a "large" payload).
+ * Server → client payload sent during the configuration phase (registered as a "large" payload).
  *
  * <p>This is the workhorse of the file-transfer protocol. Each packet carries the
  * raw bytes of exactly one file together with the destination folder and file name.
@@ -37,7 +37,7 @@ public record ModFilePayload(String folder, String fileName, byte[] data) implem
      * {@code byteArray(MAX_BYTES)} writes a var-int length prefix followed by the
      * raw bytes, and enforces the cap on the read side.
      */
-    public static final StreamCodec<RegistryFriendlyByteBuf, ModFilePayload> STREAM_CODEC =
+    public static final StreamCodec<FriendlyByteBuf, ModFilePayload> STREAM_CODEC =
             StreamCodec.composite(
                     ByteBufCodecs.STRING_UTF8, ModFilePayload::folder,
                     ByteBufCodecs.STRING_UTF8, ModFilePayload::fileName,

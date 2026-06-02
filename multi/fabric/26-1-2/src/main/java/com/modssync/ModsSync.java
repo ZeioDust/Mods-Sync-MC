@@ -10,14 +10,14 @@ import com.modssync.net.ManifestPayload;
 import com.modssync.net.ModFilePayload;
 import com.modssync.net.PackManifestPayload;
 import com.modssync.net.RequestFilesPayload;
+import com.modssync.net.SyncDonePayload;
 import com.mojang.logging.LogUtils;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
+import net.fabricmc.fabric.api.networking.v1.FabricServerConfigurationPacketListenerImpl;
 import net.fabricmc.fabric.api.networking.v1.ServerConfigurationConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerConfigurationNetworking;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -57,15 +57,20 @@ public class ModsSync implements ModInitializer {
     @Override
     public void onInitialize() {
         // Register all payload types before any networking event fires.
-        // Configuration-bound payloads are clientbound only (server → client during handshake).
-        // The file-request channel is play-phase: client asks, server streams bytes back.
+        //
+        // The ENTIRE protocol now lives in the configuration phase (before the world loads):
+        // the server advertises its manifests, the client asks for missing files, and the
+        // server streams the bytes back — all while the player sits on the connecting screen.
+        // Doing it here (instead of play) is what lets the progress bar show on the loading
+        // screen and lets everything finish in a single connection.
         PayloadTypeRegistry.clientboundConfiguration().register(ManifestPayload.TYPE, ManifestPayload.STREAM_CODEC);
         PayloadTypeRegistry.clientboundConfiguration().register(PackManifestPayload.TYPE, PackManifestPayload.STREAM_CODEC);
-        PayloadTypeRegistry.serverboundPlay().register(RequestFilesPayload.TYPE, RequestFilesPayload.STREAM_CODEC);
-        // ModFilePayload can be large (full mod jar), so it uses the "large" overload that lifts the default size limit.
-        PayloadTypeRegistry.clientboundPlay().registerLarge(ModFilePayload.TYPE, ModFilePayload.STREAM_CODEC, MAX_FILE_BYTES);
+        // ModFilePayload can be large (a full mod jar), so it uses the "large" overload that lifts the default size limit.
+        PayloadTypeRegistry.clientboundConfiguration().registerLarge(ModFilePayload.TYPE, ModFilePayload.STREAM_CODEC, MAX_FILE_BYTES);
+        PayloadTypeRegistry.serverboundConfiguration().register(RequestFilesPayload.TYPE, RequestFilesPayload.STREAM_CODEC);
+        PayloadTypeRegistry.serverboundConfiguration().register(SyncDonePayload.TYPE, SyncDonePayload.STREAM_CODEC);
 
-        // --- Configuration phase: advertise what the client must mirror ---
+        // --- Configuration phase: park the client on a sync task and advertise the manifest ---
         // This runs once per connecting client, before they enter the world.
         ServerConfigurationConnectionEvents.CONFIGURE.register((handler, server) -> {
             // If the client doesn't have ModsSync it won't recognise our channel at all.
@@ -76,32 +81,41 @@ public class ModsSync implements ModInitializer {
                 LOGGER.info("ModsSync rejected a client without ModsSync installed");
                 return;
             }
-            List<ServerMod> mods = buildModManifest();
-            ServerConfigurationNetworking.send(handler, new ManifestPayload(mods));
-            List<PackFile> packs = buildPackManifest();
-            ServerConfigurationNetworking.send(handler, new PackManifestPayload(packs));
-            LOGGER.info("ModsSync advertised {} mods and {} packs to a configuring client", mods.size(), packs.size());
+            // Adding a task tells Fabric "configuration isn't finished yet", holding the client
+            // on the connecting screen. The task sends the manifests; the client then either
+            // disconnects (after cloning/scheduling) or sends SyncDonePayload to be let in.
+            ((FabricServerConfigurationPacketListenerImpl) handler).addTask(
+                    new ModsSyncConfigTask(buildModManifest(), buildPackManifest()));
         });
 
-        // --- Play phase: serve file bytes on demand ---
-        // Only compliant clients (those that passed the config gate) reach this point.
-        // They send a RequestFilesPayload listing file names they need; we stream each one back.
-        ServerPlayNetworking.registerGlobalReceiver(RequestFilesPayload.TYPE, (payload, context) -> {
-            ServerPlayer player = context.player();
+        // --- Configuration phase: stream requested file bytes back ---
+        // The client sends one RequestFilesPayload per folder listing the names it's missing.
+        // We read each file and stream it as a ModFilePayload, ending with the sentinel packet.
+        // Reading/sending happens on a dedicated thread so we never block netty's event loop
+        // (a 300-mod transfer is hundreds of MB — far too much to push on the IO thread).
+        ServerConfigurationNetworking.registerGlobalReceiver(RequestFilesPayload.TYPE, (payload, context) -> {
+            var handler = context.packetListener();
             String folder = payload.folder();
-            // Only serve from explicitly whitelisted folders (mods, resourcepacks, shaderpacks).
-            // This guards against a crafted packet trying to read arbitrary server files.
-            if (SyncFolders.isAllowed(folder)) {
-                for (String name : payload.fileNames()) {
-                    byte[] data = readFileBytes(folder, name);
-                    ServerPlayNetworking.send(player, new ModFilePayload(folder, name, data == null ? new byte[0] : data));
+            List<String> names = payload.fileNames();
+            Thread streamer = new Thread(() -> {
+                if (SyncFolders.isAllowed(folder)) {
+                    for (String name : names) {
+                        byte[] data = readFileBytes(folder, name);
+                        ServerConfigurationNetworking.send(handler, new ModFilePayload(folder, name, data == null ? new byte[0] : data));
+                    }
                 }
-            }
-            // Always send the sentinel "end" packet so the client knows the stream is complete
-            // and can count down its download counter correctly.
-            ServerPlayNetworking.send(player, ModFilePayload.end());
-            LOGGER.info("ModsSync streamed {} {} file(s) to {}", payload.fileNames().size(), folder, player.getName().getString());
+                // Always send the sentinel "end" packet so the client knows this folder's batch is done.
+                ServerConfigurationNetworking.send(handler, ModFilePayload.end());
+                LOGGER.info("ModsSync streamed {} {} file(s) to a configuring client", names.size(), folder);
+            }, "modssync-file-streamer");
+            streamer.setDaemon(true);
+            streamer.start();
         });
+
+        // --- Configuration phase: client reports it's fully in sync → release it into the world ---
+        // Completing the task is what tells Fabric configuration is finished for this client.
+        ServerConfigurationNetworking.registerGlobalReceiver(SyncDonePayload.TYPE, (payload, context) ->
+                ((FabricServerConfigurationPacketListenerImpl) context.packetListener()).completeTask(ModsSyncConfigTask.TYPE));
     }
 
     private static Path folderPath(String folder) {

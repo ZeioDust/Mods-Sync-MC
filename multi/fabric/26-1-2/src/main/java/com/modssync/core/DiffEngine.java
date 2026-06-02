@@ -55,9 +55,17 @@ public final class DiffEngine {
         List<ModRef> unchanged = new ArrayList<>();
 
         // Build a lookup map so we can resolve each server mod to its local counterpart in O(1).
+        // When the same mod id appears more than once (e.g. the correct enabled jar AND an old
+        // copy left behind as .jar.disabled), the ENABLED copy must win. Otherwise a disabled
+        // stale version could shadow the good enabled one, making the diff think the wrong
+        // version is installed and re-downloading forever — an endless "please restart" loop.
         Map<String, LocalMod> localById = new HashMap<>();
         for (LocalMod m : localMods) {
-            localById.put(m.modId().toLowerCase(Locale.ROOT), m);
+            String key = m.modId().toLowerCase(Locale.ROOT);
+            LocalMod existing = localById.get(key);
+            if (existing == null || (!existing.enabled() && m.enabled())) {
+                localById.put(key, m);
+            }
         }
 
         // Track which IDs the server listed; used in pass 2 to find "extra" local mods.
