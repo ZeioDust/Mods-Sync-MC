@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "id": "modssync",
+  "version": "${version}",
+  "name": "ModsSync",
+  "description": "Server-enforced mod & resource-pack sync. The server decides the allowed set; clients are made to match it — extra (cheat) mods/packs like minimaps or x-ray are disabled, missing ones are cloned from the server. A fair-play / modpack-consistency tool for trusted servers.",
+  "authors": [
+    "ZeioDust"
+  ],
+  "contact": {
+    "homepage": "https://github.com/ZeioDust/Mods-Sync-MC",
+    "sources": "https://github.com/ZeioDust/Mods-Sync-MC",
+    "issues": "https://github.com/ZeioDust/Mods-Sync-MC/issues"
+  },
+  "license": "MIT",
+  "icon": "assets/modssync/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["com.modssync.ModsSync"],
+    "client": ["com.modssync.ModsSyncClient"],
+    "preLaunch": ["com.modssync.ModsSyncPreLaunch"]
+  },
+  "depends": {
+    "fabricloader": ">=0.19.0",
+    "minecraft": "~26.1.2",
+    "java": ">=25",
+    "fabric-api": "*"
+  }
+}

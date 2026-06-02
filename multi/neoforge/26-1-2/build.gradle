@@ -34,6 +34,12 @@ base {
     archivesName = mod_id
 }
 
+// All built jars go to <repo-root>/jars named "<modid>_<loader>.<mcversion>.jar"
+tasks.named('jar', Jar).configure {
+    destinationDirectory = file("${rootDir}/../../../jars")
+    archiveFileName = "${mod_id}_${mod_version}-neoforge.${minecraft_version}.jar"
+}
+
 // Mojang ships Java 25 to end users in 26.1.2, so mods should target Java 25.
 java.toolchain.languageVersion = JavaLanguageVersion.of(25)
 
